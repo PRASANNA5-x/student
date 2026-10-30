@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Course Registration</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: whitesmoke;
+        }
+
+        h2 {
+            color: green;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        button {
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            margin: 15px auto;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+
+        #message {
+            color: blue;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Student Course Registration System</h1>
+
+<h2>Add Student</h2>
+<input type="text" id="studentId" placeholder="Student ID">
+<input type="text" id="studentName" placeholder="Student Name">
+<button onclick="addStudent()">Add Student</button>
+
+<h2>Create Course</h2>
+<input type="text" id="courseId" placeholder="Course ID">
+<input type="text" id="courseName" placeholder="Course Name">
+<input type="number" id="capacity" placeholder="Seat Capacity">
+<button onclick="addCourse()">Add Course</button>
+
+<h2>Register Student</h2>
+<select id="selectStudent"></select>
+<select id="selectCourse"></select>
+<button onclick="registerStudent()">Register</button>
+
+<h2>Cancel Registration</h2>
+<select id="cancelStudent"></select>
+<select id="cancelCourse"></select>
+<button onclick="cancelRegistration()">Cancel</button>
+
+<h3 id="message"></h3>
+
+<h2>Student List</h2>
+<table>
+    <tr>
+        <th>Student ID</th>
+        <th>Student Name</th>
+    </tr>
+    <tbody id="studentList"></tbody>
+</table>
+
+<h2>Course List</h2>
+<table>
+    <tr>
+        <th>Course ID</th>
+        <th>Course Name</th>
+        <th>Capacity</th>
+        <th>Available Seats</th>
+    </tr>
+    <tbody id="courseList"></tbody>
+</table>
+
+<h2>Registered Students</h2>
+<table>
+    <tr>
+        <th>Student</th>
+        <th>Course</th>
+    </tr>
+    <tbody id="registrationList"></tbody>
+</table>
+
+<script>
+
+let students = [];
+let courses = [];
+let registrations = [];
+
+function addStudent() {
+    let id = document.getElementById("studentId").value.trim();
+    let name = document.getElementById("studentName").value.trim();
+
+    if (id == "" || name == "") {
+        alert("Enter student details");
+        return;
+    }
+
+    for (let s of students) {
+        if (s.id == id) {
+            alert("Student ID already exists");
+            return;
+        }
+    }
+
+    students.push({id: id, name: name});
+
+    document.getElementById("studentId").value = "";
+    document.getElementById("studentName").value = "";
+
+    document.getElementById("message").innerText = "STUDENT ADDED";
+    display();
+}
+
+function addCourse() {
+    let id = document.getElementById("courseId").value.trim();
+    let name = document.getElementById("courseName").value.trim();
+    let capacity = Number(document.getElementById("capacity").value);
+
+    if (id == "" || name == "" ||
+        !Number.isInteger(capacity) || capacity <= 0) {
+        alert("Enter valid course details");
+        return;
+    }
+
+    for (let c of courses) {
+        if (c.id == id) {
+            alert("Course ID already exists");
+            return;
+        }
+    }
+
+    courses.push({
+        id: id,
+        name: name,
+        capacity: capacity,
+        available: capacity
+    });
+
+    document.getElementById("courseId").value = "";
+    document.getElementById("courseName").value = "";
+    document.getElementById("capacity").value = "";
+
+    document.getElementById("message").innerText = "COURSE ADDED";
+    display();
+}
+
+function registerStudent() {
+    let studentId = document.getElementById("selectStudent").value;
+    let courseId = document.getElementById("selectCourse").value;
+
+    if (studentId == "" || courseId == "") {
+        document.getElementById("message").innerText =
+            "SELECT STUDENT AND COURSE";
+        return;
+    }
+
+    for (let r of registrations) {
+        if (r.studentId == studentId && r.courseId == courseId) {
+            document.getElementById("message").innerText =
+                "ALREADY REGISTERED";
+            return;
+        }
+    }
+
+    for (let c of courses) {
+        if (c.id == courseId) {
+            if (c.available == 0) {
+                document.getElementById("message").innerText =
+                    "COURSE FULL";
+                return;
+            }
+
+            c.available--;
+
+            registrations.push({
+                studentId: studentId,
+                courseId: courseId
+            });
+
+            document.getElementById("message").innerText =
+                "REGISTRATION SUCCESSFUL";
+
+            display();
+            return;
+        }
+    }
+}
+
+function cancelRegistration() {
+    let studentId = document.getElementById("cancelStudent").value;
+    let courseId = document.getElementById("cancelCourse").value;
+
+    if (studentId == "" || courseId == "") {
+        document.getElementById("message").innerText =
+            "SELECT STUDENT AND COURSE";
+        return;
+    }
+
+    for (let i = 0; i < registrations.length; i++) {
+        if (registrations[i].studentId == studentId &&
+            registrations[i].courseId == courseId) {
+
+            registrations.splice(i, 1);
+
+            for (let c of courses) {
+                if (c.id == courseId) {
+                    c.available++;
+                    break;
+                }
+            }
+
+            document.getElementById("message").innerText =
+                "REGISTRATION CANCELLED";
+
+            display();
+            return;
+        }
+    }
+
+    document.getElementById("message").innerText =
+        "REGISTRATION NOT FOUND";
+}
+
+function display() {
+    let studentList = document.getElementById("studentList");
+    let courseList = document.getElementById("courseList");
+    let registrationList = document.getElementById("registrationList");
+
+    studentList.innerHTML = "";
+    courseList.innerHTML = "";
+    registrationList.innerHTML = "";
+
+    let studentOptions = '<option value="">Select Student</option>';
+    let courseOptions = '<option value="">Select Course</option>';
+
+    for (let s of students) {
+        studentList.innerHTML += `
+            <tr>
+                <td>${s.id}</td>
+                <td>${s.name}</td>
+            </tr>
+        `;
+
+        studentOptions +=
+            `<option value="${s.id}">${s.name}</option>`;
+    }
+
+    for (let c of courses) {
+        courseList.innerHTML += `
+            <tr>
+                <td>${c.id}</td>
+                <td>${c.name}</td>
+                <td>${c.capacity}</td>
+                <td>${c.available}</td>
+            </tr>
+        `;
+
+        courseOptions +=
+            `<option value="${c.id}">${c.name}</option>`;
+    }
+
+    document.getElementById("selectStudent").innerHTML = studentOptions;
+    document.getElementById("cancelStudent").innerHTML = studentOptions;
+
+    document.getElementById("selectCourse").innerHTML = courseOptions;
+    document.getElementById("cancelCourse").innerHTML = courseOptions;
+
+    for (let r of registrations) {
+        let student = students.find(s => s.id == r.studentId);
+        let course = courses.find(c => c.id == r.courseId);
+
+        registrationList.innerHTML += `
+            <tr>
+                <td>${student.name}</td>
+                <td>${course.name}</td>
+            </tr>
+        `;
+    }
+}
+
+display();
+
+</script>
+
+</body>
+</html>
